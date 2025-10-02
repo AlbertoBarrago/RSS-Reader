@@ -38,13 +38,6 @@ struct MainContentView: View {
             }
 
             Spacer()
-            
-            if style == .simple && showInMenuBar {
-                Button(action: { openWindow(id: "desktopView") }) {
-                    Image(systemName: "macwindow")
-                }
-                .help("Open in New Window")
-            }
 
             if case .all = viewModel.selectedFilter {
                 Button(action: {

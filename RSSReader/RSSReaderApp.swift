@@ -45,24 +45,6 @@ struct RSSReaderApp: App {
     }
 }
 
-struct AppLauncher: View {
-    @Environment(\.openWindow) private var openWindow
-    @ObservedObject var viewModel: ContentViewModel
-    let modelContext: ModelContext
-    
-    var body: some View {
-        MainContentView(viewModel: viewModel)
-            .onAppear {
-                // Apri la finestra desktop all'avvio
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                    NSApp.setActivationPolicy(.regular)
-                    openWindow(id: "desktopView")
-                    NSApp.activate(ignoringOtherApps: true)
-                }
-            }
-    }
-}
-
 // MARK: - AppDelegate for Menubar Integration
 class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     var menubarController: MenubarController!
