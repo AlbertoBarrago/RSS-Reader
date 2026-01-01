@@ -24,23 +24,58 @@ A lightweight, native macOS RSS Reader application built with Swift. Stay up-to-
 
 ## Installation
 
+### Download Pre-built App (Recommended)
+
+1. **Download the latest release:**
+   - Go to [Releases](https://github.com/AlbertoBarrago/RSS-Reader/releases/latest)
+   - Download `RSSReader-X.X.X.dmg`
+
+2. **Install the app:**
+   - Open the downloaded DMG file
+   - Drag `RSSReader.app` to your Applications folder
+   - **Do NOT open the app yet**
+
+3. **⚠️ Important: Bypass macOS Gatekeeper (Required for unsigned apps)**
+
+   Since the app is not code-signed, macOS will block it with a "damaged" error. To fix this, open Terminal and run:
+
+   ```bash
+   xattr -cr /Applications/RSSReader.app
+   ```
+
+   **What this does:** Removes the quarantine flag that macOS applies to downloaded apps.
+
+   **Alternative method** (may not work on all macOS versions):
+   - Right-click `RSSReader.app` in Applications
+   - Select "Open"
+   - Click "Open" again in the security dialog
+
+4. **Launch the app:**
+   - Now you can open RSS Reader from Applications or Spotlight
+   - The app will appear in your menu bar
+
+> **Note:** This is a safe, open-source application. The "damaged" warning is a standard macOS security measure for unsigned apps. You can verify the source code in this repository. I'm working on getting the app properly code-signed to eliminate this step in future releases.
+
 ### Build from Source
+
 1. **Clone the repository:**
 ```bash
-   git clone https://github.com/AlbertoBarrago/RSS-Reader.git
-   cd RSS-Reader
+git clone https://github.com/AlbertoBarrago/RSS-Reader.git
+cd RSS-Reader
 ```
-2. Open in xCode
-```bash
-  open RSSReader.xcodeproj
-```
-3. Configure target:
-Select "My Mac" from the destination menu in Xcode
-Ensure you're targeting macOS (not iOS simulator)
 
-4. Build and run:
-Press `Cmd + R` or click the Run button
-For command-line builds, see RUN.md
+2. **Open in Xcode:**
+```bash
+open RSSReader.xcodeproj
+```
+
+3. **Configure target:**
+   - Select "My Mac" from the destination menu in Xcode
+   - Ensure you're targeting macOS (not iOS simulator)
+
+4. **Build and run:**
+   - Press `Cmd + R` or click the Run button
+   - For command-line builds, see [RUN.md](RUN.md)
 
 ### Usage
 
