@@ -1,0 +1,57 @@
+name: PR Validation
+
+on:
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  validate:
+    runs-on: macos-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Xcode
+      uses: maxim-lobanov/setup-xcode@v1
+      with:
+        xcode-version: latest-stable
+
+    - name: Build project
+      run: |
+        xcodebuild clean build \
+          -project RSSReader.xcodeproj \
+          -scheme "RSSReader" \
+          -configuration Debug \
+          -derivedDataPath build \
+          CODE_SIGN_IDENTITY="" \
+          CODE_SIGNING_REQUIRED=NO \
+          CODE_SIGNING_ALLOWED=NO
+
+    - name: Run tests
+      run: |
+        xcodebuild test \
+          -project RSSReader.xcodeproj \
+          -scheme "RSSReader" \
+          -destination 'platform=macOS' \
+          CODE_SIGN_IDENTITY="" \
+          CODE_SIGNING_REQUIRED=NO \
+          CODE_SIGNING_ALLOWED=NO
+
+    - name: Comment PR
+      uses: actions/github-script@v7
+      if: always()
+      with:
+        script: |
+          const status = '${{ job.status }}';
+          const emoji = status === 'success' ? '✅' : '❌';
+          const message = status === 'success'
+            ? 'Build and tests passed successfully!'
+            : 'Build or tests failed. Please check the logs.';
+
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: `${emoji} **PR Validation ${status}**\n\n${message}`
+          });

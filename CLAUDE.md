@@ -30,6 +30,38 @@ find ~/Library/Developer/Xcode/DerivedData -name "RSSReader.app" | head -n 1 | x
 xcodebuild test -scheme RSSReader -project RSSReader.xcodeproj -destination 'platform=macOS'
 ```
 
+## CI/CD Pipeline
+
+The repository uses GitHub Actions for automated building, testing, and releases:
+
+### PR Validation (`.github/workflows/pr-check.yml`)
+**Triggers**: Pull requests to `main` or `develop`
+- Builds the project in Debug mode
+- Runs all tests
+- Posts build status as PR comment
+- Blocks merge if build or tests fail
+
+### Automatic Release (`.github/workflows/release.yml`)
+**Triggers**: Push to `main` branch
+- Automatically increments patch version (e.g., v1.2.3 → v1.2.4)
+- Updates Xcode project version
+- Builds release version (unsigned)
+- Creates DMG installer
+- Generates changelog from commits since last tag
+- Creates git tag
+- Publishes GitHub Release with DMG attached
+- Uploads DMG as artifact
+
+**Version Bumping**: Uses semantic versioning (MAJOR.MINOR.PATCH). On each merge to main, the PATCH version auto-increments. To manually bump MAJOR or MINOR versions, manually create and push a tag before merging (e.g., `git tag v2.0.0 && git push --tags`).
+
+### Development Workflow
+1. Create feature branch from `develop`
+2. Make changes and push
+3. Open PR to `develop` or `main`
+4. CI validates build and tests automatically
+5. Merge PR to `main` to trigger automatic release
+6. GitHub automatically creates new version and publishes release
+
 ## Architecture
 
 ### Dual UI System

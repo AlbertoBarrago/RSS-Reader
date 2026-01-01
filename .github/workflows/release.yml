@@ -1,0 +1,143 @@
+name: Build & Release
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  release:
+    runs-on: macos-latest
+    permissions:
+      contents: write
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Setup Xcode
+      uses: maxim-lobanov/setup-xcode@v1
+      with:
+        xcode-version: latest-stable
+
+    - name: Get latest tag and bump version
+      id: version
+      run: |
+        # Get the latest tag, default to v0.0.0 if no tags exist
+        LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
+        echo "Latest tag: $LATEST_TAG"
+
+        # Extract version number (remove 'v' prefix)
+        VERSION=${LATEST_TAG#v}
+
+        # Split version into components
+        IFS='.' read -r MAJOR MINOR PATCH <<< "$VERSION"
+
+        # Increment patch version
+        PATCH=$((PATCH + 1))
+
+        # Create new version
+        NEW_VERSION="$MAJOR.$MINOR.$PATCH"
+        NEW_TAG="v$NEW_VERSION"
+
+        echo "New version: $NEW_TAG"
+        echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
+        echo "tag=$NEW_TAG" >> $GITHUB_OUTPUT
+
+    - name: Update Xcode project version
+      run: |
+        VERSION="${{ steps.version.outputs.version }}"
+
+        # Update CFBundleShortVersionString (Marketing Version)
+        /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $VERSION" \
+          RSSReader.xcodeproj/project.pbxproj 2>/dev/null || true
+
+        # Update using agvtool (Apple's versioning tool)
+        xcrun agvtool new-marketing-version "$VERSION" || echo "agvtool failed, continuing..."
+
+        echo "Updated project to version $VERSION"
+
+    - name: Install create-dmg
+      run: brew install create-dmg
+
+    - name: Build Xcode project (unsigned)
+      run: |
+        xcodebuild clean build \
+          -project RSSReader.xcodeproj \
+          -scheme "RSSReader" \
+          -configuration Release \
+          -derivedDataPath build \
+          CODE_SIGN_IDENTITY="" \
+          CODE_SIGNING_REQUIRED=NO \
+          CODE_SIGNING_ALLOWED=NO
+
+    - name: Verify app was built
+      run: |
+        ls -la "build/Build/Products/Release/"
+        if [ ! -d "build/Build/Products/Release/RSSReader.app" ]; then
+          echo "Error: RSSReader.app not found!"
+          exit 1
+        fi
+
+    - name: Create DMG
+      run: |
+        create-dmg \
+          --volname "RSS Reader ${{ steps.version.outputs.version }}" \
+          --window-pos 200 120 \
+          --window-size 800 400 \
+          --icon-size 100 \
+          --app-drop-link 600 185 \
+          "RSSReader-${{ steps.version.outputs.version }}.dmg" \
+          "build/Build/Products/Release/RSSReader.app"
+
+    - name: Generate changelog
+      id: changelog
+      run: |
+        # Get commits since last tag
+        LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+
+        # Create changelog header
+        echo "## What's Changed" > CHANGELOG.md
+        echo "" >> CHANGELOG.md
+
+        if [ -z "$LATEST_TAG" ]; then
+          # If no previous tag, get all commits
+          git log --pretty=format:"- %s (%h)" --no-merges >> CHANGELOG.md
+        else
+          # Get commits since last tag
+          git log ${LATEST_TAG}..HEAD --pretty=format:"- %s (%h)" --no-merges >> CHANGELOG.md
+        fi
+
+        # Add full changelog link
+        echo "" >> CHANGELOG.md
+        echo "" >> CHANGELOG.md
+        echo "**Full Changelog**: https://github.com/${{ github.repository }}/commits/${{ steps.version.outputs.tag }}" >> CHANGELOG.md
+
+        echo "Generated changelog"
+
+    - name: Create Git tag
+      run: |
+        git config user.name "github-actions[bot]"
+        git config user.email "github-actions[bot]@users.noreply.github.com"
+        git tag -a "${{ steps.version.outputs.tag }}" -m "Release ${{ steps.version.outputs.tag }}"
+        git push origin "${{ steps.version.outputs.tag }}"
+
+    - name: Create GitHub Release
+      uses: softprops/action-gh-release@v1
+      with:
+        tag_name: ${{ steps.version.outputs.tag }}
+        name: Release ${{ steps.version.outputs.tag }}
+        body_path: CHANGELOG.md
+        files: |
+          RSSReader-${{ steps.version.outputs.version }}.dmg
+        draft: false
+        prerelease: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Upload DMG as artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: rss-reader-${{ steps.version.outputs.version }}-dmg
+        path: "RSSReader-${{ steps.version.outputs.version }}.dmg"
