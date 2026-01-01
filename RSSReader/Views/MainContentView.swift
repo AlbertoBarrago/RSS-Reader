@@ -3,7 +3,7 @@ import SwiftUI
 struct MainContentView: View {
     @Environment(\.openWindow) private var openWindow
     @ObservedObject var viewModel: ContentViewModel
-    @AppStorage("showInMenuBar") private var showInMenuBar = true
+    @AppStorage("showInMenuBar") private var showInMenuBar = false
     var style: ArticleListStyle = .simple
 
     var body: some View {

@@ -48,10 +48,14 @@ struct RSSReaderApp: App {
 // MARK: - AppDelegate for Menubar Integration
 class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     var menubarController: MenubarController!
+    @AppStorage("showInMenuBar") private var showInMenuBar = false
 
     func applicationDidFinishLaunching(_ aNotification: Notification) {
+        // Set activation policy before creating menubar controller
+        NSApp.setActivationPolicy(showInMenuBar ? .regular : .accessory)
+
         menubarController = MenubarController()
-        
+
         UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge]) { granted, error in
             if granted {
                 print("Notification permission granted.")
@@ -59,8 +63,6 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
                 print(error.localizedDescription)
             }
         }
-
-        NSApp.setActivationPolicy(.regular)
     }
 
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
@@ -91,7 +93,7 @@ class MenubarController: NSObject, ObservableObject {
     private var modelContext: ModelContext
     @AppStorage("keepOpen") private var keepOpen: Bool = false
     @AppStorage("pollingInterval") private var pollingInterval: TimeInterval = 300
-    @AppStorage("showInMenuBar") private var showInMenuBar = true
+    @AppStorage("showInMenuBar") private var showInMenuBar = false
     
     private var timer: Timer?
     
@@ -124,9 +126,7 @@ class MenubarController: NSObject, ObservableObject {
         self.popover.behavior = .transient
         self.popover.contentSize = NSSize(width: 800, height: 600)
         self.popover.contentViewController = NSHostingController(rootView: ContentView(modelContext: modelContext))
-    
 
-        NSApp.setActivationPolicy(.accessory)
         startTimer()
     }
     
