@@ -244,7 +244,7 @@ class MenubarController: NSObject, ObservableObject {
     @objc func showAboutPanel() {
         let creditsString = """
             Developed by: Alberto Barrago
-            © 2025 RSS Reader
+            © 2026 RSS Reader
             """
 
         let credits = NSAttributedString(

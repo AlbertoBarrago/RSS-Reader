@@ -103,9 +103,7 @@ class ContentViewModel: ObservableObject {
 
     func addDefaultFeeds() {
         let defaultFeeds = [
-            RSSFeedSource(name: "joshwcomeau", url: "https://www.joshwcomeau.com/rss.xml"),
-            RSSFeedSource(name: "nytimes-tecnology", url: "https://rss.nytimes.com/services/xml/rss/nyt/Technology.xml"),
-            RSSFeedSource(name: "rsshub-science", url: "https://rsshub.app/science/blogs/pipeline"),
+            RSSFeedSource(name: "joshwcomeau", url: "https://www.joshwcomeau.com/rss.xml")
         ]
 
         for feed in defaultFeeds {
